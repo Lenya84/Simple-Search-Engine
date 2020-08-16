@@ -1,47 +1,44 @@
 package search;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     
     static Scanner scanner = new Scanner(System.in);
     
-    public static String[] standartInputPeople() {
+    public static List<String> standartInputPeople() {
         System.out.println("Enter the number of people:");
         
         int numberOfLines = scanner.nextInt();
         scanner.nextLine();
-        String[] lines = new String[numberOfLines];
+        List<String> people = new ArrayList<>();
         
         System.out.println("Enter the number of people:");
         
-        for (int i = 0; i < lines.length; i++) {
-            lines[i] = scanner.nextLine();
+        for (int i = 0; i < numberOfLines; i++) {
+            people.add(scanner.nextLine());
         }
         
-        return lines;
+        return people;
     }
 
-    public static String[] fileInputPeople(String path) {
-        File people = new File(path);
-        String[] lines = new String[10000];
-        int index = 0;
+    public static List<String> fileInputPeople(String path) {
+        File peopleFile = new File(path);
+        List<String> people = new ArrayList<>();
 
-        try (Scanner scanner = new Scanner(people)) {
+        try (Scanner scanner = new Scanner(peopleFile)) {
             while (scanner.hasNext()) {
-                lines[index] = scanner.nextLine();
-                index++;
+                people.add(scanner.nextLine());
             }
         } catch (FileNotFoundException e) {
-            System.out.println("No file found: " + people.getPath());
+            System.out.println("No file found: " + peopleFile.getPath());
         }
 
-        return Arrays.copyOfRange(lines,0, index);
+        return people;
     }
     
-    public static void findPerson(String[] lines) {
+    public static void findPerson(List<String> lines) {
         
         System.out.println("\nEnter a name or email to search all suitable people.");
 
@@ -63,14 +60,53 @@ public class Main {
         }
 
     }
+
+    public static void findPerson(Map<String, Set<Integer>> map, List<String> people) {
+        System.out.println("\nEnter a name or email to search all suitable people.");
+
+        String dataToSearch = scanner.next().toLowerCase();
+        StringBuilder searchResult = new StringBuilder();
+
+        Set<Integer> numbers = map.get(dataToSearch);
+
+        if (numbers != null) {
+            for (var n : numbers) {
+                searchResult.append(people.get(n)).append("\n");
+            }
+        }
+
+
+        if (searchResult.length() == 0) {
+            System.out.println("No matching people found.");
+        } else {
+            System.out.println("Found people:");
+            System.out.println(searchResult);
+        }
+
+    }
     
     public static void main(String[] args) {
-        String[] lines;
+        List<String> people;
 
         if (args.length != 0 && "--data".equals(args[0])) {
-            lines = fileInputPeople(args[1]);
+            people = fileInputPeople(args[1]);
         } else {
-            lines = standartInputPeople();
+            people = standartInputPeople();
+        }
+
+        Map<String, Set<Integer>> map = new HashMap<>();
+        for (var line : people) {
+            for (var word : line.split(" ")) {
+                for (int i = 0; i < people.size(); i++) {
+                    word = word.toLowerCase();
+                    String str = people.get(i).toLowerCase();
+                    if (str.contains(word.toLowerCase())) {
+                        if (map.putIfAbsent(word, new HashSet<>(Set.of(i))) != null) {
+                            map.get(word).add(i);
+                        }
+                    }
+                }
+            }
         }
         
         while(true) {
@@ -78,11 +114,11 @@ public class Main {
             String choice = scanner.next();
             switch(choice) {
                 case "1":
-                    findPerson(lines);
+                    findPerson(map, people);
                     break;
                 case "2":
                     System.out.println("\n=== List of people ===");
-                    System.out.println(String.join("\n", lines));
+                    System.out.println(String.join("\n", people));
                     break;
                 case "0":
                     return;
