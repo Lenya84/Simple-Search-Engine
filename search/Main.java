@@ -14,7 +14,7 @@ public class Main {
         scanner.nextLine();
         List<String> people = new ArrayList<>();
         
-        System.out.println("Enter the number of people:");
+        System.out.println("Enter people:");
         
         for (int i = 0; i < numberOfLines; i++) {
             people.add(scanner.nextLine());
@@ -61,19 +61,48 @@ public class Main {
 
     }
 
-    public static void findPerson(Map<String, Set<Integer>> map, List<String> people) {
+    public static void findPerson(Map<String, Set<Integer>> map, List<String> people, String mode) {
         System.out.println("\nEnter a name or email to search all suitable people.");
-
-        String dataToSearch = scanner.next().toLowerCase();
+        scanner.nextLine();
+        String dataToSearch = scanner.nextLine().toLowerCase();
         StringBuilder searchResult = new StringBuilder();
 
-        Set<Integer> numbers = map.get(dataToSearch);
+        if ("ALL".equals(mode)) {
+            Set<Integer> indexes = map.get(dataToSearch);
 
-        if (numbers != null) {
-            for (var n : numbers) {
-                searchResult.append(people.get(n)).append("\n");
+            if (indexes != null) {
+                for (var indx : indexes) {
+                    searchResult.append(people.get(indx)).append("\n");
+                }
             }
+        } else if ("ANY".equals(mode)) {
+            Set<Integer> indexes = new HashSet<>();
+
+            for (var word : dataToSearch.split(" ")) {
+                indexes.addAll(map.getOrDefault(word, Set.of()));
+            }
+
+            for (var indx : indexes) {
+                searchResult.append(people.get(indx)).append("\n");
+            }
+        } else if ("NONE".equals(mode)) {
+            Set<Integer> noneIndexes = new HashSet<>();
+
+            for (var word : dataToSearch.split(" ")) {
+                if (map.get(word) != null) {
+                    noneIndexes.addAll(map.get(word));
+                }
+            }
+
+            for (int i = 0; i < people.size(); i++) {
+                if (!noneIndexes.contains(i)) {
+                    searchResult.append(people.get(i)).append("\n");
+                }
+            }
+        } else {
+            System.out.println("error");
         }
+
 
 
         if (searchResult.length() == 0) {
@@ -97,10 +126,10 @@ public class Main {
         Map<String, Set<Integer>> map = new HashMap<>();
         for (var line : people) {
             for (var word : line.split(" ")) {
+                word = word.toLowerCase();
                 for (int i = 0; i < people.size(); i++) {
-                    word = word.toLowerCase();
                     String str = people.get(i).toLowerCase();
-                    if (str.contains(word.toLowerCase())) {
+                    if (str.contains(word)) {
                         if (map.putIfAbsent(word, new HashSet<>(Set.of(i))) != null) {
                             map.get(word).add(i);
                         }
@@ -114,7 +143,9 @@ public class Main {
             String choice = scanner.next();
             switch(choice) {
                 case "1":
-                    findPerson(map, people);
+                    System.out.println("Select a matching strategy: ALL, ANY, NONE");
+                    String mode = scanner.next();
+                    findPerson(map, people, mode);
                     break;
                 case "2":
                     System.out.println("\n=== List of people ===");
